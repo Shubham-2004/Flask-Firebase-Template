@@ -1,4 +1,6 @@
-flask
-firebase_admin
+Flask
+firebase-admin
 gunicorn
 python-dotenv
+flask-sqlalchemy
+flask-mail

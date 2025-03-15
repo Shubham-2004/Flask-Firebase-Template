@@ -1,36 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" >
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <title>Dashboard</title>
 
-  <title>Flask Template</title>
+  <!-- Custom Styles -->
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #ffffff;
+      color: #333;
+    }
+    main {
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #007bff;
+    }
+    form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+     
+      padding: 15px;
+      border: 2px solid #007bff;
+      border-radius: 10px;
+      font-size: 16px;
+      outline: none;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      margin-bottom: 10px;
+      background-color: #f1f9ff;
+      border-left: 5px solid #007bff;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .completed {
+      text-decoration: line-through;
+      color: #888;
+    }
+    .actions button {
+      margin-left: 10px;
+      padding: 8px 15px;
+    }
+    .complete-btn {
+      background-color: #28a745;
+    }
+    .complete-btn:hover {
+      background-color: #218838;
+    }
+    .delete-btn {
+      background-color: #dc3545;
+    }
+    .delete-btn:hover {
+      background-color: #c82333;
+    }
+  </style>
+</head>
 
+<body>
+  {% include 'navbar_private.html' %}
 
-  </head>
+  <main>
+    <h1> Dashboard </h1>
 
-  <body>
+    <p>Welcome to your dashboard! Here you can manage your todos.</p>
 
-    {% include 'navbar_private.html' %}
+    <!-- Add Todo Form -->
+    <form action="{{ url_for('add_todo') }}" method="POST">
+      <input type="text" name="title" placeholder="Add a new todo..." required />
+      <button type="submit">Add</button>
+    </form>
 
-    <main>
+    <!-- Display Todos -->
+    {% if todos %}
+    <ul>
+      {% for todo in todos %}
+      <li>
+        <span class="{{ 'completed' if todo.completed else '' }}">{{ todo.title }}</span>
+        <div class="actions">
+          <!-- Toggle Completion -->
+          <form action="{{ url_for('toggle_todo', todo_id=todo.id) }}" method="POST" style="display:inline;">
+            <button type="submit" class="complete-btn">{{ "Undo" if todo.completed else "Complete" }}</button>
+          </form>
+          <!-- Delete Todo -->
+          <form action="{{ url_for('delete_todo', todo_id=todo.id) }}" method="POST" style="display:inline;">
+            <button type="submit" class="delete-btn">Delete</button>
+          </form>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>No todos found. Start by adding one!</p>
+    {% endif %}
+  </main>
 
-      <h1>Dashboard (Protected Page)</h1>
-
-      <p>This is a protected page that requires authenication to view.</p> 
-
-      <p>Use this template to create and customize more protected pages for your app.</p>
-
-    </main>
-
-    <script src="{{ url_for('static', filename='login-auth.js') }}" type="module"></script>
-    <script src="{{ url_for('static', filename='scripts.js') }}" type="module"></script>
-
-  </body>
-  
-
+  <script src="{{ url_for('static', filename='login-auth.js') }}" type="module"></script>
+  <script src="{{ url_for('static', filename='scripts.js') }}" type="module"></script>
+</body>
 </html>
