@@ -1,8 +1,4 @@
-from flask import Flask, redirect, render_template, request, make_response, session, jsonify, url_for
-import secrets
-from functools import wraps
-import firebase_admin
-from firebase_admin import credentials, firestore, auth
+from flask import Flask, redirect, render_template, request, make_response, jsonify, url_for
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
@@ -39,11 +35,6 @@ app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
 db_sql = SQLAlchemy(app)
 mail = Mail(app)
 
-# Firebase Admin SDK
-cred = credentials.Certificate("firebase-auth.json")
-firebase_admin.initialize_app(cred)
-db_firestore = firestore.client()
-
 # Todo Model
 class Todo(db_sql.Model):
     id = db_sql.Column(db_sql.Integer, primary_key=True)
@@ -58,53 +49,10 @@ class Todo(db_sql.Model):
 with app.app_context():
     db_sql.create_all()
 
-# Authentication decorator
-def auth_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user' not in session:
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-# Authentication route
-@app.route('/auth', methods=['POST'])
-def authorize():
-    token = request.headers.get('Authorization')
-    if not token or not token.startswith('Bearer '):
-        return "Unauthorized", 401
-
-    token = token[7:]
-    try:
-        decoded_token = auth.verify_id_token(token, check_revoked=True, clock_skew_seconds=60)
-        session['user'] = decoded_token
-        return redirect(url_for('dashboard'))
-    except Exception as e:
-        print(f"Authentication error: {e}")
-        return "Unauthorized", 401
-
 # Public Routes
 @app.route('/')
 def home():
-    return render_template('home.html')
-
-@app.route('/login')
-def login():
-    if 'user' in session:
-        return redirect(url_for('dashboard'))
-    return render_template('login.html')
-
-@app.route('/signup')
-def signup():
-    if 'user' in session:
-        return redirect(url_for('dashboard'))
-    return render_template('signup.html')
-
-@app.route('/reset-password')
-def reset_password():
-    if 'user' in session:
-        return redirect(url_for('dashboard'))
-    return render_template('forgot_password.html')
+    return redirect(url_for('dashboard'))
 
 @app.route('/terms')
 def terms():
@@ -114,25 +62,18 @@ def terms():
 def privacy():
     return render_template('privacy.html')
 
-@app.route('/logout')
-def logout():
-    session.pop('user', None)
-    response = make_response(redirect(url_for('login')))
-    response.set_cookie('session', '', expires=0)
-    return response
-
-# Private Routes
+# Dashboard Route
 @app.route('/dashboard')
-@auth_required
 def dashboard():
-    user_id = session['user']['uid']
+    # Assuming a default user_id for simplicity
+    user_id = "default_user"
     todos = Todo.query.filter_by(user_id=user_id).all()
     return render_template('dashboard.html', todos=todos)
 
 @app.route('/add_todo', methods=['POST'])
-@auth_required
 def add_todo():
-    user_id = session['user']['uid']
+    # Assuming a default user_id for simplicity
+    user_id = "default_user"
     title = request.form.get('title')
 
     if not title:
@@ -143,18 +84,16 @@ def add_todo():
     db_sql.session.commit()
 
     try:
-        user_record = auth.get_user(user_id)
-        user_email = user_record.email
-        send_email_notification(user_email, title)
+        send_email_notification("user@example.com", title)
     except Exception as e:
-        print(f"Error fetching user email or sending email: {e}")
+        print(f"Error sending email: {e}")
 
     return redirect(url_for('dashboard'))
 
 @app.route('/toggle_todo/<int:todo_id>', methods=['POST'])
-@auth_required
 def toggle_todo(todo_id):
-    user_id = session['user']['uid']
+    # Assuming a default user_id for simplicity
+    user_id = "default_user"
     todo = Todo.query.filter_by(id=todo_id, user_id=user_id).first()
     if not todo:
         return "Todo not found", 404
@@ -164,9 +103,9 @@ def toggle_todo(todo_id):
     return redirect(url_for('dashboard'))
 
 @app.route('/delete_todo/<int:todo_id>', methods=['POST'])
-@auth_required
 def delete_todo(todo_id):
-    user_id = session['user']['uid']
+    # Assuming a default user_id for simplicity
+    user_id = "default_user"
     todo = Todo.query.filter_by(id=todo_id, user_id=user_id).first()
     if not todo:
         return "Todo not found", 404
@@ -174,7 +113,6 @@ def delete_todo(todo_id):
     db_sql.session.delete(todo)
     db_sql.session.commit()
     return redirect(url_for('dashboard'))
-
 
 def send_email_notification(user_email, todo_title):
     subject = "New Todo Created!"
@@ -186,7 +124,6 @@ def send_email_notification(user_email, todo_title):
         print("Email sent successfully!")
     except Exception as e:
         print(f"Error sending email: {e}")
-
 
 mail.debug = True
 app.logger.setLevel("DEBUG")
