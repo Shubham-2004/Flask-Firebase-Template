@@ -3,8 +3,13 @@
     <span class="hamburger">&#9776;</span> <!-- Hamburger Icon -->
     <div class="navbar-right" id="navbarRight">
         <span class="closebtn">&times;</span>
-        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
         <!-- Dropdown for News -->
-        <a href="{{ url_for('login') }}">Login</a>
+        <div class="dropdown">
+            <a class="dropbtn" id="dropBtn">Account</a>
+            <div class="dropdown-content">
+                <a id="sign-out-btn" href="{{ url_for('home') }}">Logout</a>
+            </div>
+        </div>
     </div>
 </div>
